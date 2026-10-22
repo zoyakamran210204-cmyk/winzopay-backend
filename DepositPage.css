@@ -1,0 +1,553 @@
+/* ================================
+   Deposit Page Styles
+   ================================ */
+
+.dep-page {
+    min-height: 100vh;
+    background: #f1f5f9;
+}
+
+.dep-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 30px 20px;
+}
+
+/* Header / Breadcrumb */
+.dep-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 25px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.dep-breadcrumb-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+/* Steps Progress */
+.dep-steps {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.dep-step {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.dep-step.active {
+    border-color: #1e40af;
+    background: #eff6ff;
+}
+
+.dep-step-num {
+    width: 28px;
+    height: 28px;
+    background: #f1f5f9;
+    color: #64748b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.dep-step.active .dep-step-num {
+    background: #1e40af;
+    color: white;
+}
+
+.dep-step-content {
+    flex: 1;
+}
+
+.dep-step-title {
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+}
+
+.dep-step-sub {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.dep-step-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: #dbeafe;
+    color: #1e40af;
+    border-radius: 6px;
+    font-weight: 800;
+}
+
+/* Card */
+.dep-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dep-card-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dep-card-sub {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 16px;
+}
+
+/* Balance Display */
+.dep-balance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.dep-balance-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.dep-balance-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.dep-verified-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.dep-verified-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.dep-secure-text {
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Amount Input */
+.dep-amount-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.dep-amount-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.dep-amount-limits {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.dep-amount-input-wrap {
+    display: flex;
+    align-items: center;
+    padding: 18px 20px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    transition: all 0.2s;
+}
+
+.dep-amount-input-wrap:focus-within {
+    border-color: #1e40af;
+    background: white;
+}
+
+.dep-amount-prefix {
+    font-size: 24px;
+    font-weight: 800;
+    color: #64748b;
+    margin-right: 12px;
+}
+
+.dep-amount-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    width: 100%;
+}
+
+.dep-amount-input::placeholder {
+    color: #cbd5e1;
+}
+
+.dep-amount-input:focus {
+    outline: none;
+}
+
+.dep-amount-clear {
+    background: transparent;
+    color: #94a3b8;
+    font-size: 18px;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.dep-amount-clear:hover {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+/* Quick Amount Buttons */
+.dep-quick-amounts {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.dep-quick-btn {
+    padding: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    transition: all 0.2s;
+}
+
+.dep-quick-btn:hover {
+    background: #eff6ff;
+    border-color: #1e40af;
+    color: #1e40af;
+}
+
+.dep-quick-btn.active {
+    background: #1e40af;
+    border-color: #1e40af;
+    color: white;
+}
+
+/* Payment Method */
+.dep-payment-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 12px;
+}
+
+.dep-payment-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.dep-payment-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 8px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.dep-payment-btn:hover {
+    background: #f1f5f9;
+}
+
+.dep-payment-btn.active {
+    background: #eff6ff;
+    border-color: #1e40af;
+}
+
+.dep-payment-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+    font-size: 13px;
+}
+
+.dep-payment-icon.btc { background: #f7931a; }
+.dep-payment-icon.btcr { background: #16a34a; }
+.dep-payment-icon.usdt { background: #26a17b; }
+.dep-payment-icon.eth { background: #627eea; }
+.dep-payment-icon.bank { background: #1e40af; }
+
+.dep-payment-name {
+    font-size: 10px;
+    font-weight: 700;
+    color: #475569;
+    letter-spacing: 0.3px;
+}
+
+.dep-payment-btn.active .dep-payment-name {
+    color: #1e40af;
+}
+
+/* Bank Dropdown (if bank selected) */
+.dep-bank-select {
+    width: 100%;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 20px;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+}
+
+.dep-bank-select:focus {
+    border-color: #1e40af;
+    background-color: white;
+    outline: none;
+}
+
+/* Summary */
+.dep-summary {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.dep-summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.dep-summary-row:last-child {
+    margin-bottom: 0;
+    padding-top: 8px;
+    border-top: 1px dashed #cbd5e1;
+    font-weight: 800;
+}
+
+.dep-summary-label {
+    color: #64748b;
+    font-weight: 600;
+}
+
+.dep-summary-value {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.dep-summary-value.green {
+    color: #16a34a;
+}
+
+/* Proceed Button */
+.dep-proceed-btn {
+    width: 100%;
+    padding: 16px;
+    background: #0f172a;
+    color: white;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+}
+
+.dep-proceed-btn:hover:not(:disabled) {
+    background: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
+}
+
+.dep-proceed-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Message alerts */
+.dep-alert {
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.dep-alert.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.dep-alert.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* History */
+.dep-history-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.dep-history-icon {
+    width: 36px;
+    height: 36px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.dep-history-content {
+    flex: 1;
+}
+
+.dep-history-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+}
+
+.dep-history-date {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.dep-history-status {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 8px;
+}
+
+.dep-history-status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.dep-history-status.approved {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.dep-history-status.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Empty state */
+.dep-empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dep-container {
+        padding: 20px 15px;
+    }
+    
+    .dep-steps {
+        flex-direction: column;
+    }
+    
+    .dep-quick-amounts {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .dep-payment-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .dep-balance {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .dep-verified-badge {
+        align-items: flex-start;
+    }
+}
