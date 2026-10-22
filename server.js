@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const transactionRoutes = require('./routes/transactionRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -10,17 +9,23 @@ dotenv.config();
 // Import Routes
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
-
-
 
 // Initialize App
 const app = express();
 
 // ================================
-// Middleware
+// Middleware (CORS Configuration)
 // ================================
-app.use(cors());
+// Yeh configuration mobile app aur website dono ko allow karegi
+app.use(cors({
+    origin: "*", // Sabhi origins (App, Website) ko allow karein
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+}));
+
 app.use(express.json());
 
 // ================================
