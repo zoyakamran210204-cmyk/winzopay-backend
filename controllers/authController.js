@@ -3,6 +3,23 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // ================================
+// Helper: Get Client IP
+// ================================
+const getClientIP = (req) => {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) {
+        const ips = forwarded.split(',').map(ip => ip.trim());
+        return ips[0];
+    }
+    if (req.headers['cf-connecting-ip']) return req.headers['cf-connecting-ip'];
+    if (req.headers['x-real-ip']) return req.headers['x-real-ip'];
+    let ip = req.socket.remoteAddress || req.connection.remoteAddress || 'Unknown';
+    if (ip === '::1' || ip === '::ffff:127.0.0.1') return '127.0.0.1 (Local)';
+    if (ip.startsWith('::ffff:')) ip = ip.substring(7);
+    return ip;
+};
+
+// ================================
 // Register User
 // ================================
 const registerUser = async (req, res) => {
@@ -20,20 +37,6 @@ const registerUser = async (req, res) => {
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
-        const getClientIP = (req) => {
-            const forwarded = req.headers['x-forwarded-for'];
-            if (forwarded) {
-                const ips = forwarded.split(',').map(ip => ip.trim());
-                return ips[0];
-            }
-            if (req.headers['cf-connecting-ip']) return req.headers['cf-connecting-ip'];
-            if (req.headers['x-real-ip']) return req.headers['x-real-ip'];
-            let ip = req.socket.remoteAddress || req.connection.remoteAddress || 'Unknown';
-            if (ip === '::1' || ip === '::ffff:127.0.0.1') return '127.0.0.1 (Local)';
-            if (ip.startsWith('::ffff:')) ip = ip.substring(7);
-            return ip;
-        };
 
         const ipAddress = getClientIP(req);
 
@@ -85,10 +88,8 @@ const loginUser = async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        user.ipAddress = 
-            req.headers['x-forwarded-for']?.split(',')[0] || 
-            req.socket.remoteAddress || 
-            'Unknown';
+        // ⚠️ IP Update on Login
+        user.ipAddress = getClientIP(req);
         await user.save();
 
         const token = jwt.sign(
@@ -124,7 +125,7 @@ const loginUser = async (req, res) => {
 };
 
 // ================================
-// Change Password (⚠️ NAYA)
+// Change Password
 // ================================
 const changePassword = async (req, res) => {
     try {
