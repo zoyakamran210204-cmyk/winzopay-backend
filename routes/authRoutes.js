@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, changePassword } = require('../controllers/authController');
+const { registerUser, loginUser, changePassword, getCurrentUser } = require('../controllers/authController');
 const { getCryptoRates } = require('../controllers/cryptoController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -10,7 +10,7 @@ const { protect } = require('../middleware/authMiddleware');
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 
-// Crypto Rates (Brazil BRL rates auto-update)
+// Crypto Rates
 router.get('/crypto-rates', async (req, res) => {
     const rates = await getCryptoRates();
     if (rates) {
@@ -20,7 +20,10 @@ router.get('/crypto-rates', async (req, res) => {
     }
 });
 
-// ⚠️ NAYA: Change Password (Login required)
+// Change Password
 router.post('/change-password', protect, changePassword);
+
+// ⚠️ NAYA: Get Current User Data
+router.get('/me', protect, getCurrentUser);
 
 module.exports = router;
