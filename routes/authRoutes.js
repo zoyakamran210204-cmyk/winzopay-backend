@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser } = require('../controllers/authController');
+const { registerUser, loginUser, changePassword } = require('../controllers/authController');
 const { getCryptoRates } = require('../controllers/cryptoController');
+const { protect } = require('../middleware/authMiddleware');
 
 // ================================
 // Public Routes (No login required)
@@ -18,5 +19,8 @@ router.get('/crypto-rates', async (req, res) => {
         res.status(500).json({ message: 'Rates not available, try again later' });
     }
 });
+
+// ⚠️ NAYA: Change Password (Login required)
+router.post('/change-password', protect, changePassword);
 
 module.exports = router;

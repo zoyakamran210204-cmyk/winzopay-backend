@@ -11,6 +11,7 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const bankRoutes = require('./routes/bankRoutes'); // ⚠️ NAYA
 
 // Initialize App
 const app = express();
@@ -18,9 +19,8 @@ const app = express();
 // ================================
 // Middleware (CORS Configuration)
 // ================================
-// Yeh configuration mobile app aur website dono ko allow karegi
 app.use(cors({
-    origin: "*", // Sabhi origins (App, Website) ko allow karein
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
@@ -42,6 +42,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/transaction', transactionRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/bank', bankRoutes); // ⚠️ NAYA
 
 // Health Check Route
 app.get('/', (req, res) => {
