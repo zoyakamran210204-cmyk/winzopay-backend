@@ -3,7 +3,7 @@ const User = require('../models/User');
 const MiningPlan = require('../models/MiningPlan');
 
 // ================================
-// Create Deposit Request — WITH Transaction ID (Bank only)
+// Create Deposit Request
 // ================================
 const createDeposit = async (req, res) => {
     try {
@@ -15,15 +15,6 @@ const createDeposit = async (req, res) => {
 
         if (amount > 100000) {
             return res.status(400).json({ message: 'Maximum deposit is R$ 100,000' });
-        }
-
-        // ⚠️ Transaction ID SIRF Bank ke liye zaroori hai
-        if (cryptoType === 'Bank') {
-            if (!transactionId || transactionId.trim().length < 3) {
-                return res.status(400).json({ 
-                    message: 'Transaction ID / UTR is required for bank transfer (minimum 3 characters)' 
-                });
-            }
         }
 
         const ipAddress = 
@@ -38,7 +29,7 @@ const createDeposit = async (req, res) => {
             currency: 'BRL',
             cryptoType: cryptoType || 'USDT',
             planName: planName || null,
-            transactionId: cryptoType === 'Bank' ? transactionId.trim() : null,
+            transactionId: cryptoType === 'Bank' ? transactionId?.trim() : null,
             paymentProof: paymentProof || null,
             status: 'Pending',
             ipAddress
@@ -147,7 +138,7 @@ const getMyTransactions = async (req, res) => {
 };
 
 // ================================
-// Buy RP Plan
+// Buy RP Plan (Purchase) — WITH MiningPlan Creation
 // ================================
 const buyRPPlan = async (req, res) => {
     try {
@@ -165,11 +156,12 @@ const buyRPPlan = async (req, res) => {
             });
         }
 
+        // ⚠️ Plan configuration (Cycle: 900 seconds = 15 minutes)
         const planConfig = {
-            'A': { min: 100, max: 500, roi: 5, cycle: 120 },
-            'B': { min: 501, max: 1000, roi: 8, cycle: 300 },
-            'C': { min: 1001, max: 1500, roi: 10, cycle: 300 },
-            'D': { min: 10000, max: 100000, roi: 12, cycle: 500 }
+            'A': { min: 100, max: 500, roi: 5, cycle: 900 },
+            'B': { min: 501, max: 1000, roi: 8, cycle: 900 },
+            'C': { min: 1001, max: 5000, roi: 10, cycle: 900 },
+            'D': { min: 10000, max: 100000, roi: 12, cycle: 900 }
         };
 
         const config = planConfig[planName];
@@ -188,10 +180,12 @@ const buyRPPlan = async (req, res) => {
             req.socket.remoteAddress || 
             'Unknown';
 
+        // Calculate profit
         const expectedProfit = (amount * config.roi) / 100;
         const totalReturn = amount + expectedProfit;
         const endTime = new Date(Date.now() + config.cycle * 1000);
 
+        // Create Transaction
         const transaction = new Transaction({
             userId: user._id,
             type: 'PlanPurchase',
@@ -204,6 +198,7 @@ const buyRPPlan = async (req, res) => {
         });
         await transaction.save();
 
+        // Create MiningPlan
         const miningPlan = new MiningPlan({
             userId: user._id,
             planName,
@@ -218,6 +213,7 @@ const buyRPPlan = async (req, res) => {
         });
         await miningPlan.save();
 
+        // Update user balances
         user.balance -= amount;
         user.miningCapital += amount;
         user.rpBalance += amount;
