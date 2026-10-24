@@ -90,4 +90,4 @@ const setDefaultBankAccount = async (req, res) => {
     }
 };
 
-module.exports = { addBankAccount, getBankAccounts, updateBankAccount, deleteBankAccount, setDefaultBankAccount };
+module.exports = { addBankAccount, getBankAccounts, updateBankAccount, deleteBankAccount, setDefaultBankAccount };	

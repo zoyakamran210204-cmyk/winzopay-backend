@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+const MiningPlan = require('../models/MiningPlan'); // Mining plan ke liye zaroori
 
 // ================================
 // Get All Users (IP ke sath)
@@ -142,47 +143,13 @@ const handleTransaction = async (req, res) => {
 
         // ====== Business Logic ======
 
-        // Deposit Approved → Add to Top-Up Balance
+        // ⚠️ Deposit Approved → Add to Top-Up Balance ONLY
         if (transaction.type === 'Deposit' && action === 'Approved') {
             const user = await User.findById(transaction.userId);
             
-            if (transaction.planName) {
-                const planConfig = {
-                    'A': { roi: 5, cycle: 120 },
-                    'B': { roi: 8, cycle: 300 },
-                    'C': { roi: 10, cycle: 300 },
-                    'D': { roi: 12, cycle: 500 }
-                };
-                
-                const config = planConfig[transaction.planName];
-                if (config) {
-                    const expectedProfit = (transaction.amount * config.roi) / 100;
-                    const totalReturn = transaction.amount + expectedProfit;
-                    const endTime = new Date(Date.now() + config.cycle * 1000);
-
-                    const MiningPlan = require('../models/MiningPlan');
-                    const miningPlan = new MiningPlan({
-                        userId: user._id,
-                        planName: transaction.planName,
-                        investmentAmount: transaction.amount,
-                        profitPercent: config.roi,
-                        expectedProfit,
-                        totalReturn,
-                        miningCycleSeconds: config.cycle,
-                        startTime: new Date(),
-                        endTime,
-                        status: 'Active'
-                    });
-                    await miningPlan.save();
-
-                    user.miningCapital += transaction.amount;
-                    user.rpBalance += transaction.amount;
-                    await user.save();
-                }
-            } else {
-                user.balance += transaction.amount;
-                await user.save();
-            }
+            // Seedha balance add karein (koi plan check nahi)
+            user.balance += transaction.amount;
+            await user.save();
         }
 
         // Withdraw Approved → Deduct from Withdrawable Balance
@@ -192,7 +159,7 @@ const handleTransaction = async (req, res) => {
             });
         }
 
-        // Plan Purchase Approved
+        // Plan Purchase Approved (agar future mein zaroorat pade)
         if (transaction.type === 'PlanPurchase' && action === 'Approved') {
             await User.findByIdAndUpdate(transaction.userId, {
                 $inc: { 
@@ -289,7 +256,7 @@ const resetUserPassword = async (req, res) => {
 };
 
 // ================================
-// ⚠️ NAYA: Add Balance to User
+// Add Balance to User (Admin Manual)
 // ================================
 const addUserBalance = async (req, res) => {
     try {
