@@ -7,11 +7,11 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     country: { type: String, default: 'Brazil' },
     currency: { type: String, default: 'BRL' },
-    balance: { type: Number, default: 0 }, // Top-Up Balance
+    balance: { type: Number, default: 0 },
     miningCapital: { type: Number, default: 0 },
     rpBalance: { type: Number, default: 0 },
     withdrawableBalance: { type: Number, default: 0 },
-    ipAddress: { type: String, default: 'Unknown' }, // Admin isko dekhega
+    ipAddress: { type: String, default: 'Unknown' },
     status: { 
         type: String, 
         enum: ['Active', 'Frozen', 'Deactivated'], 
@@ -22,6 +22,22 @@ const userSchema = new mongoose.Schema({
         enum: ['User', 'Admin'], 
         default: 'User' 
     },
+    
+    // ⚠️ NAYA: Bank Accounts Array
+    bankAccounts: [
+        {
+            bankCode: String,
+            bankName: String,
+            accountHolderName: String,
+            accountNumber: String,
+            agency: String,
+            cpfCnpj: String,
+            accountType: String,
+            isDefault: { type: Boolean, default: false },
+            addedAt: { type: Date, default: Date.now }
+        }
+    ],
+    
     createdAt: { type: Date, default: Date.now }
 });
 
