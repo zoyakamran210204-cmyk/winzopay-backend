@@ -144,51 +144,46 @@ const handleTransaction = async (req, res) => {
 
         // Deposit Approved → Add to Top-Up Balance
         if (transaction.type === 'Deposit' && action === 'Approved') {
-    const user = await User.findById(transaction.userId);
-    
-    // Agar plan-specific deposit tha
-    if (transaction.planName) {
-        // Direct buy plan
-        const planConfig = {
-            'A': { roi: 5, cycle: 120 },
-            'B': { roi: 8, cycle: 300 },
-            'C': { roi: 10, cycle: 300 },
-            'D': { roi: 12, cycle: 500 }
-        };
-        
-        const config = planConfig[transaction.planName];
-        if (config) {
-            const expectedProfit = (transaction.amount * config.roi) / 100;
-            const totalReturn = transaction.amount + expectedProfit;
-            const endTime = new Date(Date.now() + config.cycle * 1000);
+            const user = await User.findById(transaction.userId);
+            
+            if (transaction.planName) {
+                const planConfig = {
+                    'A': { roi: 5, cycle: 120 },
+                    'B': { roi: 8, cycle: 300 },
+                    'C': { roi: 10, cycle: 300 },
+                    'D': { roi: 12, cycle: 500 }
+                };
+                
+                const config = planConfig[transaction.planName];
+                if (config) {
+                    const expectedProfit = (transaction.amount * config.roi) / 100;
+                    const totalReturn = transaction.amount + expectedProfit;
+                    const endTime = new Date(Date.now() + config.cycle * 1000);
 
-            // Create MiningPlan
-            const MiningPlan = require('../models/MiningPlan');
-            const miningPlan = new MiningPlan({
-                userId: user._id,
-                planName: transaction.planName,
-                investmentAmount: transaction.amount,
-                profitPercent: config.roi,
-                expectedProfit,
-                totalReturn,
-                miningCycleSeconds: config.cycle,
-                startTime: new Date(),
-                endTime,
-                status: 'Active'
-            });
-            await miningPlan.save();
+                    const MiningPlan = require('../models/MiningPlan');
+                    const miningPlan = new MiningPlan({
+                        userId: user._id,
+                        planName: transaction.planName,
+                        investmentAmount: transaction.amount,
+                        profitPercent: config.roi,
+                        expectedProfit,
+                        totalReturn,
+                        miningCycleSeconds: config.cycle,
+                        startTime: new Date(),
+                        endTime,
+                        status: 'Active'
+                    });
+                    await miningPlan.save();
 
-            // Update balances (miningCapital, rpBalance)
-            user.miningCapital += transaction.amount;
-            user.rpBalance += transaction.amount;
-            await user.save();
+                    user.miningCapital += transaction.amount;
+                    user.rpBalance += transaction.amount;
+                    await user.save();
+                }
+            } else {
+                user.balance += transaction.amount;
+                await user.save();
+            }
         }
-    } else {
-        // Normal top-up
-        user.balance += transaction.amount;
-        await user.save();
-    }
-}
 
         // Withdraw Approved → Deduct from Withdrawable Balance
         if (transaction.type === 'Withdraw' && action === 'Approved') {
@@ -230,7 +225,6 @@ const deleteTransaction = async (req, res) => {
             return res.status(404).json({ message: 'Transaction not found' });
         }
 
-        // Safety: Approved transactions cannot be deleted
         if (transaction.status === 'Approved') {
             return res.status(400).json({ 
                 message: 'Cannot delete an approved transaction. Reject it first if needed.' 
@@ -248,8 +242,9 @@ const deleteTransaction = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
 // ================================
-// Reset User Password (Generate New Temporary Password)
+// Reset User Password
 // ================================
 const resetUserPassword = async (req, res) => {
     try {
@@ -261,19 +256,17 @@ const resetUserPassword = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Generate new random password
         const generatePassword = () => {
             const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
             let pwd = '';
             for (let i = 0; i < 8; i++) {
                 pwd += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            return pwd + '@' + Math.floor(100 + Math.random() * 900); // Add @XXX
+            return pwd + '@' + Math.floor(100 + Math.random() * 900);
         };
 
         const newPassword = generatePassword();
 
-        // Hash and save
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
@@ -282,7 +275,7 @@ const resetUserPassword = async (req, res) => {
 
         res.json({
             message: 'Password reset successfully',
-            newPassword: newPassword,  // Return plain password (one-time)
+            newPassword: newPassword,
             user: {
                 _id: user._id,
                 name: user.name,
@@ -296,7 +289,67 @@ const resetUserPassword = async (req, res) => {
 };
 
 // ================================
-// EXPORTS — Sabse aakhir mein
+// ⚠️ NAYA: Add Balance to User
+// ================================
+const addUserBalance = async (req, res) => {
+    try {
+        const { userId, amount, balanceType } = req.body;
+
+        if (!userId || !amount || !balanceType) {
+            return res.status(400).json({ message: 'userId, amount, and balanceType are required' });
+        }
+
+        if (amount <= 0) {
+            return res.status(400).json({ message: 'Amount must be greater than 0' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (balanceType === 'balance') {
+            user.balance += amount;
+        } else if (balanceType === 'miningCapital') {
+            user.miningCapital += amount;
+        } else if (balanceType === 'rpBalance') {
+            user.rpBalance += amount;
+        } else if (balanceType === 'withdrawableBalance') {
+            user.withdrawableBalance += amount;
+        } else {
+            return res.status(400).json({ message: 'Invalid balanceType' });
+        }
+
+        await user.save();
+
+        // Transaction record banayein
+        await new Transaction({
+            userId: user._id,
+            type: 'Deposit',
+            amount,
+            currency: 'BRL',
+            cryptoType: 'Bank',
+            status: 'Approved',
+            ipAddress: 'Admin Manual Entry'
+        }).save();
+
+        res.json({ 
+            message: `Successfully added R$ ${amount} to ${balanceType}`,
+            user: {
+                balance: user.balance,
+                miningCapital: user.miningCapital,
+                rpBalance: user.rpBalance,
+                withdrawableBalance: user.withdrawableBalance
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// ================================
+// EXPORTS
 // ================================
 module.exports = { 
     getAllUsers, 
@@ -307,5 +360,6 @@ module.exports = {
     getAllTransactions,
     handleTransaction,
     deleteTransaction,
-	resetUserPassword    
+    resetUserPassword,
+    addUserBalance
 };

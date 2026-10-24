@@ -9,7 +9,8 @@ const {
     getAllTransactions,
     handleTransaction,
     deleteTransaction,
-	resetUserPassword    
+    resetUserPassword,
+    addUserBalance
 } = require('../controllers/adminController');
 
 const { protect, adminOnly } = require('../middleware/authMiddleware');
@@ -23,6 +24,9 @@ router.put('/user/status', protect, adminOnly, changeUserStatus);
 
 // --- Reset User Password ---
 router.put('/user/reset-password', protect, adminOnly, resetUserPassword);
+
+// --- ⚠️ NAYA: Add Balance ---
+router.put('/user/add-balance', protect, adminOnly, addUserBalance);
 
 // --- Admin Role Management ---
 router.put('/user/make-admin', protect, adminOnly, makeAdmin);
