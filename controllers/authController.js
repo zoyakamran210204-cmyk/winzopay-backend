@@ -2,78 +2,87 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// ================================
+// Helper: Get Client IP
+// ================================
 const getClientIP = (req) => {
     const forwarded = req.headers['x-forwarded-for'];
-    if (forwarded) return forwarded.split(',')[0].trim();
+    if (forwarded) {
+        const ips = forwarded.split(',').map(ip => ip.trim());
+        return ips[0];
+    }
     if (req.headers['cf-connecting-ip']) return req.headers['cf-connecting-ip'];
-    let ip = req.socket.remoteAddress || 'Unknown';
+    if (req.headers['x-real-ip']) return req.headers['x-real-ip'];
+    let ip = req.socket.remoteAddress || req.connection.remoteAddress || 'Unknown';
     if (ip === '::1' || ip === '::ffff:127.0.0.1') return '127.0.0.1 (Local)';
     if (ip.startsWith('::ffff:')) ip = ip.substring(7);
     return ip;
 };
 
-// User Registration (Sirf Mobile se)
+// ================================
+// Register User
+// ================================
 const registerUser = async (req, res) => {
     try {
-        const { name, mobile, password } = req.body;
+        const { name, email, mobile, password } = req.body;
 
-        if (!name || !mobile || !password) {
-            return res.status(400).json({ message: 'Name, mobile, and password are required' });
+        if (!name || !email || !mobile || !password) {
+            return res.status(400).json({ message: 'All fields are required' });
         }
 
-        let user = await User.findOne({ mobile });
+        let user = await User.findOne({ $or: [{ email }, { mobile }] });
         if (user) {
-            return res.status(400).json({ message: 'User already exists with this mobile number' });
+            return res.status(400).json({ message: 'User already exists with this email or mobile' });
         }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        const ipAddress = getClientIP(req);
+
         user = new User({
-            name, 
-            mobile,
-            email: mobile, // Backend requirement ke liye email field mein mobile save kar diya
+            name, email, mobile,
             password: hashedPassword,
-            ipAddress: getClientIP(req),
+            ipAddress: ipAddress,
             country: 'Brazil',
             currency: 'BRL'
         });
 
         await user.save();
-        res.status(201).json({ message: 'User registered successfully', userId: user._id });
+
+        res.status(201).json({ 
+            message: 'User registered successfully',
+            userId: user._id
+        });
 
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
-// Login (Flexible: Email ya Mobile, Role Check ke sath)
+// ================================
+// Login User
+// ================================
 const loginUser = async (req, res) => {
     try {
-        const { email, mobile, password } = req.body; 
-        
-        if (!password || (!email && !mobile)) {
-            return res.status(400).json({ message: 'Credentials and password required' });
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password required' });
         }
 
-        let user;
-
-        // Hum email ya mobile dono se dhoondenge
-        if (email) {
-            user = await User.findOne({ email });
-        } else if (mobile) {
-            user = await User.findOne({ mobile });
-        }
-
+        const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        // Status Check
-        if (user.status === 'Frozen') return res.status(403).json({ message: 'Your account is Frozen.' });
-        if (user.status === 'Deactivated') return res.status(403).json({ message: 'Your account is Deactivated.' });
+        if (user.status === 'Frozen') {
+            return res.status(403).json({ message: 'Your account is Frozen. Please contact Admin.' });
+        }
+        if (user.status === 'Deactivated') {
+            return res.status(403).json({ message: 'Your account is Deactivated.' });
+        }
 
-        // Password Check
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid credentials' });
@@ -82,15 +91,30 @@ const loginUser = async (req, res) => {
         user.ipAddress = getClientIP(req);
         await user.save();
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign(
+            { id: user._id, role: user.role }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '7d' }
+        );
 
         res.json({ 
             token, 
             user: { 
-                _id: user._id, name: user.name, email: user.email, mobile: user.mobile, role: user.role,
-                balance: user.balance, miningCapital: user.miningCapital, rpBalance: user.rpBalance,
-                withdrawableBalance: user.withdrawableBalance, currency: user.currency, country: user.country,
-                status: user.status, ipAddress: user.ipAddress, bankAccounts: user.bankAccounts || []
+                _id: user._id,
+                id: user._id, 
+                name: user.name, 
+                email: user.email, 
+                mobile: user.mobile,
+                role: user.role,
+                balance: user.balance,
+                miningCapital: user.miningCapital,
+                rpBalance: user.rpBalance,
+                withdrawableBalance: user.withdrawableBalance,
+                currency: user.currency,
+                country: user.country,
+                status: user.status,
+                ipAddress: user.ipAddress,
+                bankAccounts: user.bankAccounts || []
             } 
         });
 
@@ -99,26 +123,42 @@ const loginUser = async (req, res) => {
     }
 };
 
+// ================================
+// Change Password
+// ================================
 const changePassword = async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
-        if (!oldPassword || !newPassword) return res.status(400).json({ message: 'Old and new password required' });
-        if (newPassword.length < 6) return res.status(400).json({ message: 'Password must be 6 characters' });
+
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({ message: 'Old and new password are required' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: 'New password must be at least 6 characters' });
+        }
 
         const user = await User.findById(req.user._id);
+
         const isMatch = await bcrypt.compare(oldPassword, user.password);
-        if (!isMatch) return res.status(400).json({ message: 'Old password is incorrect' });
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Old password is incorrect' });
+        }
 
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(newPassword, salt);
         await user.save();
 
         res.json({ message: 'Password changed successfully' });
+
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
+// ================================
+// ⚠️ NAYA: Get Current User Data
+// ================================
 const getCurrentUser = async (req, res) => {
     try {
         const user = await User.findById(req.user._id).select('-password');
