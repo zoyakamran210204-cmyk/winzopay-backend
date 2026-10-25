@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
     },
     role: { 
         type: String, 
-        enum: ['User', 'Admin', 'SuperAdmin'], // 👈 SuperAdmin add kiya
+        enum: ['User', 'Admin'], // SuperAdmin hata diya
         default: 'User' 
     },
     
