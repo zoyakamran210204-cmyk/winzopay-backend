@@ -17,23 +17,34 @@ const bankRoutes = require('./routes/bankRoutes');
 const app = express();
 
 // ================================
-// Middleware (CORS Configuration)
+// 🔥 CORS Configuration (Vercel Fix)
 // ================================
 app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
 
 app.use(express.json());
 
 // ================================
-// Database Connection
+// 🔥 Database Connection (Vercel Fix)
 // ================================
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('✅ MongoDB Connected Successfully'))
-    .catch(err => console.log('❌ MongoDB Connection Error:', err.message));
+let isConnected = false;
+
+const connectDB = async () => {
+    if (isConnected) return;
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        isConnected = true;
+        console.log('✅ MongoDB Connected Successfully');
+    } catch (err) {
+        console.log('❌ MongoDB Connection Error:', err.message);
+    }
+};
+
+connectDB(); // Connect on startup
 
 // ================================
 // Routes
@@ -55,9 +66,14 @@ app.get('/', (req, res) => {
 });
 
 // ================================
-// Start Server
+// 🔥 Server Start (Vercel & Local Fix)
 // ================================
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+}
+
+// Export for Vercel Serverless
+module.exports = app;
