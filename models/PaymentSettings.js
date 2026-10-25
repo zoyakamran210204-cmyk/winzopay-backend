@@ -18,6 +18,9 @@ const paymentSettingsSchema = new mongoose.Schema({
         randomKey: { type: String, default: '2ae3b0bf-6ab6-4ae9-8cb3-e271afcc663d' }
     },
     
+    // 👈 NAYA: Telegram Support Username
+    telegramSupport: { type: String, default: 'vickypp' },
+    
     lastUpdated: { type: Date, default: Date.now }
 });
 

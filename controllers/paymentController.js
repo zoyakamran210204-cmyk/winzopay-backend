@@ -24,7 +24,7 @@ const getPaymentSettings = async (req, res) => {
 // ================================
 const updatePaymentSettings = async (req, res) => {
     try {
-        const { wallets, bank } = req.body;
+        const { wallets, bank, telegramSupport } = req.body;
         
         let settings = await PaymentSettings.findOne();
         if (!settings) {
@@ -33,6 +33,8 @@ const updatePaymentSettings = async (req, res) => {
         
         if (wallets) settings.wallets = { ...settings.wallets, ...wallets };
         if (bank) settings.bank = { ...settings.bank, ...bank };
+        if (telegramSupport !== undefined) settings.telegramSupport = telegramSupport;
+        
         settings.lastUpdated = new Date();
         
         await settings.save();
