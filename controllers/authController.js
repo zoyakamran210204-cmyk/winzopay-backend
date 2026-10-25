@@ -47,10 +47,9 @@ const registerUser = async (req, res) => {
     }
 };
 
-// Login (Strict Checks)
+// Login (Flexible: Email ya Mobile, Role Check ke sath)
 const loginUser = async (req, res) => {
     try {
-        // Frontend se 'email' (Admin Panel) ya 'mobile' (User Panel) aayega
         const { email, mobile, password } = req.body; 
         
         if (!password || (!email && !mobile)) {
@@ -58,26 +57,12 @@ const loginUser = async (req, res) => {
         }
 
         let user;
-        let isAdminPortal = false;
 
-        // 1. Agar request "email" ke sath aayi hai (Admin Panel)
+        // Hum email ya mobile dono se dhoondenge
         if (email) {
-            isAdminPortal = true;
             user = await User.findOne({ email });
-            
-            // Check: Agar user mila lekin Admin nahi hai, to block karo
-            if (user && user.role !== 'Admin') {
-                return res.status(403).json({ message: 'Access denied. Only Admins can login with email.' });
-            }
-        } 
-        // 2. Agar request "mobile" ke sath aayi hai (User Panel)
-        else if (mobile) {
+        } else if (mobile) {
             user = await User.findOne({ mobile });
-            
-            // Check: Agar user mila lekin Admin hai, to usko yahan login mat karwao
-            if (user && user.role === 'Admin') {
-                return res.status(403).json({ message: 'Access denied. Admins must use the Admin Panel.' });
-            }
         }
 
         if (!user) {
