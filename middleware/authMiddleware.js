@@ -46,10 +46,11 @@ const protect = async (req, res, next) => {
 };
 
 // ================================
-// Admin Only: Check if logged-in user is Admin
+// Admin Only: Check if logged-in user is Admin or SuperAdmin
 // ================================
 const adminOnly = (req, res, next) => {
-    if (req.user && req.user.role === 'Admin') {
+    // 🔥 Admin aur SuperAdmin dono allow honge
+    if (req.user && (req.user.role === 'Admin' || req.user.role === 'SuperAdmin')) {
         next();
     } else {
         res.status(403).json({ message: 'Admin access only' });

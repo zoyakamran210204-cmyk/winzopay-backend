@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
-const MiningPlan = require('../models/MiningPlan'); // Mining plan ke liye zaroori
+const MiningPlan = require('../models/MiningPlan');
 
 // ================================
 // Get All Users (IP ke sath)
@@ -38,17 +38,20 @@ const changeUserStatus = async (req, res) => {
             return res.status(400).json({ message: 'Invalid status value' });
         }
 
-        const user = await User.findByIdAndUpdate(
-            userId, 
-            { status }, 
-            { new: true }
-        ).select('-password');
+        const targetUser = await User.findById(userId);
+        if (!targetUser) return res.status(404).json({ message: 'User not found' });
 
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        // 🔥 SUPER ADMIN PROTECTION: SuperAdmin ka status change nahi ho sakta
+        if (targetUser.role === 'SuperAdmin' && req.user.role !== 'SuperAdmin') {
+            return res.status(403).json({ message: 'Cannot change status of a Super Admin.' });
+        }
+
+        targetUser.status = status;
+        await targetUser.save();
 
         res.json({ 
             message: `User status changed to ${status}`, 
-            user 
+            user: targetUser 
         });
 
     } catch (error) {
@@ -62,6 +65,12 @@ const changeUserStatus = async (req, res) => {
 const makeAdmin = async (req, res) => {
     try {
         const { userId } = req.body;
+
+        // SuperAdmin ko koi make/remove nahi kar sakta
+        const targetUser = await User.findById(userId);
+        if (targetUser.role === 'SuperAdmin') {
+            return res.status(403).json({ message: 'Cannot modify Super Admin.' });
+        }
 
         const user = await User.findByIdAndUpdate(
             userId, 
@@ -88,17 +97,20 @@ const removeAdmin = async (req, res) => {
     try {
         const { userId } = req.body;
 
-        const user = await User.findByIdAndUpdate(
-            userId, 
-            { role: 'User' }, 
-            { new: true }
-        ).select('-password');
+        const targetUser = await User.findById(userId);
+        if (!targetUser) return res.status(404).json({ message: 'User not found' });
 
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        // 🔥 SUPER ADMIN PROTECTION: SuperAdmin ko koi remove nahi kar sakta
+        if (targetUser.role === 'SuperAdmin') {
+            return res.status(403).json({ message: 'Cannot remove a Super Admin.' });
+        }
+
+        targetUser.role = 'User';
+        await targetUser.save();
 
         res.json({ 
-            message: `${user.name} is now a normal User`, 
-            user 
+            message: `${targetUser.name} is now a normal User`, 
+            user: targetUser 
         });
 
     } catch (error) {
@@ -141,13 +153,11 @@ const handleTransaction = async (req, res) => {
         transaction.status = action;
         await transaction.save();
 
-        // ====== Business Logic ======
+        // Business Logic
 
-        // ⚠️ Deposit Approved → Add to Top-Up Balance ONLY
+        // Deposit Approved → Add to Top-Up Balance ONLY
         if (transaction.type === 'Deposit' && action === 'Approved') {
             const user = await User.findById(transaction.userId);
-            
-            // Seedha balance add karein (koi plan check nahi)
             user.balance += transaction.amount;
             await user.save();
         }
@@ -159,7 +169,7 @@ const handleTransaction = async (req, res) => {
             });
         }
 
-        // Plan Purchase Approved (agar future mein zaroorat pade)
+        // Plan Purchase Approved
         if (transaction.type === 'PlanPurchase' && action === 'Approved') {
             await User.findByIdAndUpdate(transaction.userId, {
                 $inc: { 
@@ -218,9 +228,14 @@ const resetUserPassword = async (req, res) => {
         const { userId } = req.body;
         const bcrypt = require('bcryptjs');
 
-        const user = await User.findById(userId);
-        if (!user) {
+        const targetUser = await User.findById(userId);
+        if (!targetUser) {
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        // 🔥 SUPER ADMIN PROTECTION: SuperAdmin ka password reset nahi ho sakta
+        if (targetUser.role === 'SuperAdmin' && req.user.role !== 'SuperAdmin') {
+            return res.status(403).json({ message: 'Cannot reset password of a Super Admin.' });
         }
 
         const generatePassword = () => {
@@ -237,16 +252,16 @@ const resetUserPassword = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        user.password = hashedPassword;
-        await user.save();
+        targetUser.password = hashedPassword;
+        await targetUser.save();
 
         res.json({
             message: 'Password reset successfully',
             newPassword: newPassword,
             user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email
+                _id: targetUser._id,
+                name: targetUser.name,
+                email: targetUser.email
             }
         });
 

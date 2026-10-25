@@ -19,11 +19,11 @@ const userSchema = new mongoose.Schema({
     },
     role: { 
         type: String, 
-        enum: ['User', 'Admin'], 
+        enum: ['User', 'Admin', 'SuperAdmin'], // 👈 SuperAdmin add kiya
         default: 'User' 
     },
     
-    // ⚠️ NAYA: Bank Accounts Array
+    // Bank Accounts Array
     bankAccounts: [
         {
             bankCode: String,
