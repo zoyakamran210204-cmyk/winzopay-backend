@@ -20,11 +20,19 @@ const app = express();
 // Middleware (CORS Configuration)
 // ================================
 app.use(cors({
-    origin: "*",
+    origin: [
+        "https://winzopay-frontend.vercel.app",
+        "https://winzopay-admin.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:3001"
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
 }));
+
+// Preflight requests handle karne ke liye (Bohot zaroori)
+app.options('*', cors());
 
 app.use(express.json());
 
