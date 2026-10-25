@@ -26,13 +26,13 @@ const registerUser = async (req, res) => {
     try {
         const { name, email, mobile, password } = req.body;
 
-        if (!name || !mobile || !password) {
-            return res.status(400).json({ message: 'Name, mobile, and password are required' });
+        if (!name || !email || !mobile || !password) {
+            return res.status(400).json({ message: 'All fields are required' });
         }
 
-        let user = await User.findOne({ mobile });
+        let user = await User.findOne({ $or: [{ email }, { mobile }] });
         if (user) {
-            return res.status(400).json({ message: 'User already exists with this mobile number' });
+            return res.status(400).json({ message: 'User already exists with this email or mobile' });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -41,9 +41,7 @@ const registerUser = async (req, res) => {
         const ipAddress = getClientIP(req);
 
         user = new User({
-            name, 
-            mobile,
-            email: email || mobile, // Agar email nahi bheji toh mobile hi email ban jaye
+            name, email, mobile,
             password: hashedPassword,
             ipAddress: ipAddress,
             country: 'Brazil',
@@ -63,33 +61,17 @@ const registerUser = async (req, res) => {
 };
 
 // ================================
-// Login User (Mobile for User, Email for Admin)
+// Login User
 // ================================
 const loginUser = async (req, res) => {
     try {
-        const { email, mobile, password } = req.body;
+        const { email, password } = req.body;
 
-        if ((!email && !mobile) || !password) {
-            return res.status(400).json({ message: 'Credentials and password required' });
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password required' });
         }
 
-        let user;
-
-        // Admin Login (Email se)
-        if (email && email.includes('@')) {
-            user = await User.findOne({ email });
-            if (user && user.role !== 'Admin') {
-                return res.status(403).json({ message: 'Access denied. Please use User Panel.' });
-            }
-        } 
-        // User Login (Mobile se)
-        else if (mobile) {
-            user = await User.findOne({ mobile });
-            if (user && user.role === 'Admin') {
-                return res.status(403).json({ message: 'Access denied. Please use Admin Panel.' });
-            }
-        }
-
+        const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
@@ -175,7 +157,7 @@ const changePassword = async (req, res) => {
 };
 
 // ================================
-// Get Current User Data
+// ⚠️ NAYA: Get Current User Data
 // ================================
 const getCurrentUser = async (req, res) => {
     try {
