@@ -11,9 +11,7 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
-const bankRoutes = require('./routes/bankRoutes'); // ⚠️ NAYA
-
-
+const bankRoutes = require('./routes/bankRoutes'); 
 
 // Initialize App
 const app = express();
@@ -44,8 +42,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/transaction', transactionRoutes);
 app.use('/api/payment', paymentRoutes);
-app.use('/api/bank', bankRoutes); // ⚠️ NAYA
-
+app.use('/api/bank', bankRoutes); 
 
 // Health Check Route
 app.get('/', (req, res) => {
