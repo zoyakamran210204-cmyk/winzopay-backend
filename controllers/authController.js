@@ -20,19 +20,19 @@ const getClientIP = (req) => {
 };
 
 // ================================
-// Register User (Mobile Only)
+// Register User
 // ================================
 const registerUser = async (req, res) => {
     try {
-        const { name, mobile, password } = req.body;
+        const { name, email, mobile, password } = req.body;
 
-        if (!name || !mobile || !password) {
-            return res.status(400).json({ message: 'Name, mobile, and password are required' });
+        if (!name || !email || !mobile || !password) {
+            return res.status(400).json({ message: 'All fields are required' });
         }
 
-        let user = await User.findOne({ mobile });
+        let user = await User.findOne({ $or: [{ email }, { mobile }] });
         if (user) {
-            return res.status(400).json({ message: 'User already exists with this mobile number' });
+            return res.status(400).json({ message: 'User already exists with this email or mobile' });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -41,9 +41,7 @@ const registerUser = async (req, res) => {
         const ipAddress = getClientIP(req);
 
         user = new User({
-            name, 
-            mobile,
-            email: mobile, // Email field mein mobile number save kar diya
+            name, email, mobile,
             password: hashedPassword,
             ipAddress: ipAddress,
             country: 'Brazil',
@@ -63,33 +61,17 @@ const registerUser = async (req, res) => {
 };
 
 // ================================
-// Login (Admin & User Both)
+// Login User
 // ================================
 const loginUser = async (req, res) => {
     try {
-        // ⚠️ Hum dono fields receive kar rahe hain
-        const { email, mobile, password } = req.body;
+        const { email, password } = req.body;
 
-        if ((!email && !mobile) || !password) {
-            return res.status(400).json({ message: 'Credentials and password required' });
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password required' });
         }
 
-        let user;
-
-        // Agar login request mein "email" aaya hai, toh woh ADMIN hai (Admin Panel se)
-        if (email) {
-            user = await User.findOne({ email });
-            
-            // Agar email se koi user mila lekin woh Admin nahi hai, toh block karein
-            if (user && user.role !== 'Admin') {
-                return res.status(403).json({ message: 'Access denied. Admin only.' });
-            }
-        } 
-        // Agar "mobile" aaya hai, toh woh USER hai (User Panel se)
-        else if (mobile) {
-            user = await User.findOne({ mobile });
-        }
-
+        const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
@@ -175,7 +157,7 @@ const changePassword = async (req, res) => {
 };
 
 // ================================
-// Get Current User Data
+// ⚠️ NAYA: Get Current User Data
 // ================================
 const getCurrentUser = async (req, res) => {
     try {
