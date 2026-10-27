@@ -31,40 +31,27 @@ app.use(express.json());
 // ================================
 // 🔥 Database Connection (Vercel Serverless Fix)
 // ================================
-let cached = global.mongoose;
-
-if (!cached) {
-    cached = global.mongoose = { conn: null, promise: null };
-}
-
 const connectDB = async () => {
-    if (cached.conn) {
-        return cached.conn;
+    // Agar pehle se connected hai toh wapas connect mat karo
+    if (mongoose.connection.readyState === 1) {
+        return;
     }
-
-    if (!cached.promise) {
-        const opts = {
-            bufferCommands: false,
-        };
-
-        cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => {
-            console.log('✅ MongoDB Connected Successfully');
-            return mongoose;
-        });
-    }
-
+    
     try {
-        cached.conn = await cached.promise;
-    } catch (e) {
-        cached.promise = null;
-        throw e;
+        await mongoose.connect(process.env.MONGO_URI, {
+            serverSelectionTimeoutMS: 5000, // 5 second timeout
+        });
+        console.log('✅ MongoDB Connected Successfully');
+    } catch (err) {
+        console.error('❌ MongoDB Connection Error:', err.message);
     }
-
-    return cached.conn;
 };
 
-// Connect on startup
-connectDB().catch(err => console.log('❌ MongoDB Connection Error:', err.message));
+// 🔥 YEH MIDDLEWARE SABSE ZAROORI HAI: Har request se pehle DB connect karega
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
+});
 
 // ================================
 // Routes
