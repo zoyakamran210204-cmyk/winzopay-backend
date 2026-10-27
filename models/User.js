@@ -41,4 +41,5 @@ const userSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('User', userSchema);
+// 🔥 VERCEL FIX: Model ko baar-baar compile hone se bachane ke liye
+module.exports = mongoose.models.User || mongoose.model('User', userSchema);
